@@ -18,6 +18,8 @@ public class ResultBean<T> extends BaseEntity implements Serializable{
 
     public static final int NO_PERMISSION = 2;
 
+    public static final int PARAMENT_ERRO = 3;
+
     public static final int UNKNOWN_EXCEPTION = -99;
 
     private String message = "success";

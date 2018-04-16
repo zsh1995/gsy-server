@@ -47,7 +47,7 @@ public class ExamController {
         int remainTimes = payService.checkExamPurched(userInfo.getOpenId(),star);
         if(!practiceService.checkExist(userInfo.getOpenId(),star)){
             if(remainTimes > 0){
-                userRightService.updateExamTimes(userInfo.getOpenId(),star,remainTimes - 1);
+                userRightService.updateExamTimes(userInfo.getOpenId(),star,remainTimes - 1,1);
             }else {
                 throw new NoPermissionException("user right erro");
             }
@@ -63,7 +63,7 @@ public class ExamController {
                                    @RequestParam int star,
                                    @RequestParam List<Integer>chooseList) throws Exception {
         double score = practiceService.calcScore(userInfo.getOpenId(),star,chooseList);
-        userRightService.updateUserExamStatus(userInfo.getOpenId(),star,score>=54);
+        userRightService.updateUserExamStatus(userInfo.getOpenId(),star,score);
         return new ResultBean(score);
     }
 

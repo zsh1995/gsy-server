@@ -1,12 +1,17 @@
 package com.gsy.base.web.controller;
 
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -29,7 +34,13 @@ public class ExamCenterControllerTest {
 
     @Test
     public void getQuestions() throws Exception {
-        System.out.print("OK");
+        mockMvc.perform(MockMvcRequestBuilders.get("/ajax/user/invitor/setInvitor")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("invitorId","161")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.content().string(Matchers.containsString("SUCCESS")));
     }
 
 }

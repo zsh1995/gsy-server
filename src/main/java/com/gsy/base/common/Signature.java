@@ -35,7 +35,9 @@ public class Signature {
                 XStreamOmitField omitField = f.getAnnotation(XStreamOmitField.class);
             	if(anno != null && omitField == null)
             		name = anno.value();
-                list.add(name + "=" + f.get(o) + "&");
+            	if(omitField == null){
+                    list.add(name + "=" + f.get(o) + "&");
+                }
             }
         }
         int size = list.size();

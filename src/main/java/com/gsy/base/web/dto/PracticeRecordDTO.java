@@ -5,7 +5,7 @@ package com.gsy.base.web.dto;
  */
 public class PracticeRecordDTO {
 
-    private Integer userId;
+    private long userId;
 
     private Double score;
 
@@ -13,11 +13,11 @@ public class PracticeRecordDTO {
 
     private Integer stars;
 
-    public Integer getUserId() {
+    public long getUserId() {
         return userId;
     }
 
-    public void setUserId(Integer userId) {
+    public void setUserId(long userId) {
         this.userId = userId;
     }
 

@@ -3,6 +3,7 @@ package com.gsy.base.web.services;
 
 
 import com.gsy.base.web.dto.UserInfoDTO;
+import com.gsy.base.web.entity.merge.EnterpriseInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,8 @@ public interface UserInfoService {
 
     boolean updateUserInfo(UserInfoDTO userInfoDTO) throws Exception;
 
+    boolean addCompanys(List<String> companyList, String openId);
+
     UserInfoDTO getInvitor(Long id);
 
     boolean updateUserInvitor(Long id, String openId);
@@ -27,6 +30,8 @@ public interface UserInfoService {
     boolean checkEnroll(String openid);
 
     int getInviteNums(String openId);
+
+    boolean invitEnough(int invitNum, int star) throws Exception;
 
     boolean getExercisePass(String openId);
 

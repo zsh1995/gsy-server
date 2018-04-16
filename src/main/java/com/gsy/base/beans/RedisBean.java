@@ -36,6 +36,9 @@ public class RedisBean {
     public void set(String name,Object T){
         redisTemplate.opsForValue().set(name,T,30, TimeUnit.MINUTES);
     }
+    public void set(String name,Object T,int time){
+        redisTemplate.opsForValue().set(name,T,time, TimeUnit.MILLISECONDS);
+    }
     public void delete(String name){
         redisTemplate.delete(name);
     }

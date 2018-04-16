@@ -25,5 +25,5 @@ public interface UploadScoreDAO {
     int insertNewScore(PracticeRecordDTO dto);
 
     @Select("SELECT * FROM practice_record WHERE user_id = #{id} AND stars = #{stars}")
-    List<PracticeRecordDTO> getScore(@Param("id") Integer id,@Param("stars") Integer stars);
+    List<PracticeRecordDTO> getScore(@Param("id") long id, @Param("stars") Integer stars);
 }

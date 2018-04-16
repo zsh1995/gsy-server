@@ -5,7 +5,7 @@ package com.gsy.base.web.dto;
  */
 public class UserInfoDTO {
 
-    private int id;
+    private long id;
 
     private String nickName;
 
@@ -31,6 +31,10 @@ public class UserInfoDTO {
 
     private String company;
 
+    private String enrollmentType;
+
+    private String enrollmentYear;
+
     private String wantedCompany1;
 
     private String wantedCompany2;
@@ -48,6 +52,22 @@ public class UserInfoDTO {
     private int userChannel;
 
     private String createTime;
+
+    public String getEnrollmentType() {
+        return enrollmentType;
+    }
+
+    public void setEnrollmentType(String enrollmentType) {
+        this.enrollmentType = enrollmentType;
+    }
+
+    public String getEnrollmentYear() {
+        return enrollmentYear;
+    }
+
+    public void setEnrollmentYear(String enrollmentYear) {
+        this.enrollmentYear = enrollmentYear;
+    }
 
     public String getCreateTime() {
         return createTime;
@@ -193,11 +213,11 @@ public class UserInfoDTO {
         this.major = major;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 

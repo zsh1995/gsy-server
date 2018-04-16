@@ -3,16 +3,24 @@ package com.gsy.base.web.services.uerRight;
 
 import com.gsy.base.common.ApiConst;
 import com.gsy.base.common.ApiMethod;
+import com.gsy.base.common.exceptions.NoPermissionException;
 import com.gsy.base.web.dao.UserDAO;
+import com.gsy.base.web.dto.PracticeRecordDTO;
+import com.gsy.base.web.dto.UserInfoDTO;
 import com.gsy.base.web.entity.merge.WechatUserRight;
+import com.gsy.base.web.services.UploadScoreService;
+import com.gsy.base.web.services.UserInfoService;
+import com.gsy.base.web.services.coupon.CouponService;
 import com.gsy.base.web.services.payService.PayService;
 import org.apache.ibatis.binding.BindingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Created by Administrator on 2017/7/9.
  */
+@Transactional
 @Service
 public class UserRightServiceImpl implements UserRightService {
 
@@ -20,6 +28,12 @@ public class UserRightServiceImpl implements UserRightService {
     UserDAO userDAO;
     @Autowired
     PayService payService;
+    @Autowired
+    CouponService couponService;
+    @Autowired
+    UserRightService userRightService;
+    @Autowired
+    UploadScoreService uploadScoreService;
 
     @Override
     public int checkUserRight(String openId, int type, int star, int questionId) throws Exception {
@@ -28,7 +42,6 @@ public class UserRightServiceImpl implements UserRightService {
         userInformation.setOpenId(openId);
         userInformation.setQuestionId(questionId);
         userInformation.setStar(star);
-
         if(ApiConst.PURCH_TYPE_EXAM == type){
 
             userInformation.setType(ApiConst.RIGHT_TYPE_EXAM);
@@ -108,30 +121,53 @@ public class UserRightServiceImpl implements UserRightService {
     }
 
     @Override
-    public boolean updateUserExamStatus(String openId, int star, boolean pass) throws Exception {
+    public boolean sendGiftCoupon(String openId) {
+        UserInfoDTO userInfoDTO = userDAO.getUserInfo(openId);
+
+        if( userInfoDTO.getUserChannel() == 1) {
+            throw new NoPermissionException("您已报名！");
+        }
+        couponService.bindAnalyseCoupon(userInfoDTO.getId(),0);
+        couponService.bindAnalyseCoupon(userInfoDTO.getId(),0);
+        couponService.bindAnalyseCoupon(userInfoDTO.getId(),0);
+        couponService.bindExamCoupon(userInfoDTO.getId(),0);
+        return true;
+    }
+
+
+    @Override
+    public boolean updateUserExamStatus(String openId, int star, double score) throws Exception {
         int passTimes = 0;
+        boolean pass = score >= 54;
         try{
             passTimes = getExamStatus(openId,star);
         } catch (Exception e){
             passTimes = 0;
         }
-        int passed = 0;
-        if(passTimes >6) throw new Exception("考试次数异常");
-        int needTims = ApiMethod.getConstant(ApiConst.PASS_EXAM_PRE+star) - passTimes;
-        boolean unableComp = needTims > checkExamAvaliableTime(openId,star);
-        //废弃考试机会
-        //* 2018.3.8 暂废弃该功能
-        /*
-        if(unableComp){
-            updateExamTimes(openId,star,0);
-            userDAO.updateExamPassTimes(openId,star,0,0);
-            return true;
-        }
-        */
-        if(!pass) return true;
+        boolean isLastExam = checkExamAvaliableTime(openId,star) == 0;
+        boolean passFlag = checkIsPassed(openId,star);
 
-        userDAO.updateExamPassTimes(openId,star,passTimes+1,passTimes >= 5?1:0);
+        if(isLastExam){
+            userRightService.updateExamTimes(openId,star,0,0);
+            if(!passFlag){
+                userDAO.updateExamPassTimes(openId,star,0,0);
+            }
+        }
+        if(pass){
+            userDAO.updateExamPassTimes(openId,star,passTimes+1,checkIsPass(passTimes+1,star)?1:0);
+        }
+        // 记录分数
+        PracticeRecordDTO dto = new PracticeRecordDTO();
+        dto.setQuestionGroup(100);
+        dto.setStars(star);
+        dto.setScore(score);
+        uploadScoreService.uploadScore(openId,dto);
+
         return true;
+    }
+
+    private boolean checkIsPass(int times,int star){
+        return times >= ApiConst.NEEDED_PASSTIMES[star - 1];
     }
 
     @Override
@@ -140,20 +176,26 @@ public class UserRightServiceImpl implements UserRightService {
     }
 
     @Override
-    public int getExamStatus(String openId, int star) throws Exception {
+    public int getExamStatus(String openId, int star) {
         int passExam = 0;
         try{
             passExam =userDAO.findExamPassTimes(openId,star);
-        }catch (BindingException e){
-            // 说明没有通过过考试,不是异常,后期优化sql
+        } catch (BindingException e){
+            //
         }
         return passExam;
     }
 
     @Override
-    public int updateExamTimes(String openId, int star, int newData) throws Exception {
+    public boolean checkIsPassed(String openId,int star){
+        int passFlag = userDAO.findPassFlag(openId,star);
+        return passFlag == 1;
+    }
+
+    @Override
+    public int updateExamTimes(String openId, int star, int newData,int validFlag) throws Exception {
         if(newData < 0) throw new Exception("插入数据出错，新次数不能小于0");
-        return userDAO.updateExamTimes(openId,star,newData);
+        return userDAO.updateExamTimes(openId,star,newData,validFlag);
     }
 
     @Override

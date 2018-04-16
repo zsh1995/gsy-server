@@ -1,6 +1,7 @@
 package com.gsy.base.web.services.impl;
 
 import com.gsy.base.common.ApiConst;
+import com.gsy.base.common.ApiMethod;
 import com.gsy.base.common.exam.ExamHelper;
 import com.gsy.base.web.dao.QuestionDAO;
 import com.gsy.base.web.dao.UploadScoreDAO;
@@ -12,8 +13,6 @@ import com.gsy.base.web.services.ExamService;
 import com.gsy.base.web.services.PracticeService;
 import com.gsy.base.web.services.payService.PayService;
 import com.gsy.base.web.services.uerRight.UserRightService;
-import org.apache.http.NameValuePair;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -64,6 +63,11 @@ public class PracticeServiceImpl implements PracticeService {
         if(3 == stars){
             questions = questionDAO.getQuestionWork(openId,groupId);
         }
+        for(QuestionDTO temp : questions){
+            if( !ApiMethod.isEmpty(temp.getAnalyse())){
+                temp.setAnalyse("存在解析");
+            }
+        }
         if(ApiConst.TEST_SHENHE){
             for(QuestionDTO temp : questions){
                 temp.setIsPurchAnalyse(100);
@@ -94,7 +98,7 @@ public class PracticeServiceImpl implements PracticeService {
 
     @Override
     public String getQuestionAnalyse(String openId, int id,int star) throws Exception {
-        //校验是否有改题权限
+        //校验是否有该题权限
         //如果没有跑出异常
         String analyseContent = "";
         if(!ApiConst.TEST_SHENHE) {

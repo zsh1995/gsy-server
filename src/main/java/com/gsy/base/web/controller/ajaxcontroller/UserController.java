@@ -2,6 +2,7 @@ package com.gsy.base.web.controller.ajaxcontroller;
 
 import com.gsy.base.common.ApiConst;
 import com.gsy.base.common.ApiMethod;
+import com.gsy.base.common.aop.AjaxControllerAOP;
 import com.gsy.base.common.bean.ResultBean;
 import com.gsy.base.common.exceptions.NoPermissionException;
 import com.gsy.base.web.dto.InvitorCountDTO;
@@ -14,6 +15,8 @@ import com.gsy.base.web.services.coupon.CouponService;
 import com.gsy.base.web.services.payService.PayService;
 import com.gsy.base.web.services.uerRight.UserRightService;
 import com.qcloud.weapp.authorization.UserInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.xml.transform.Result;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,7 +34,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/ajax/user")
 public class UserController {
-
+    private static Logger logger =  LoggerFactory.getLogger(UserController.class);
     @Autowired
     UserInfoService userInfoService;
     @Autowired
@@ -86,15 +90,8 @@ public class UserController {
     @RequestMapping("/invitor/setInvitor")
     public ResultBean uploadInvitorId(UserInfoEntity userInfo,
                                       @RequestParam long invitorId){
-        UserInfoDTO userInfoDTO = userInfoService.getInvitor(invitorId);
-        if(userInfoDTO == null){
-            throw new NoPermissionException("不存在用户");
-        }
-        if(userInfo.getOpenId().equals(userInfoDTO.getOpenId())){
-            throw new NoPermissionException("不能选择自己");
-        }
-        couponService.bindExamCoupon(userInfo.getOpenId());
         userInfoService.updateUserInvitor(invitorId,userInfo.getOpenId());
+        couponService.bindExamCoupon(userInfo.getOpenId(),2);
         return new ResultBean();
     }
 
@@ -135,10 +132,9 @@ public class UserController {
     @RequestMapping("/uploadUserInfo")
     public ResultBean uploadUserInfo(UserInfoEntity userInfo,
                                      @RequestBody UserInfoDTO userInfoDTO) throws Exception {
-        if(ApiConst.USER_CHANNEL_ENROLL.equals(userInfoDTO.getUserChannel())){
+        if(ApiConst.USER_CHANNEL_ENROLL.equals(String.valueOf(userInfoDTO.getUserChannel()))){
             //赠送优惠券
-            couponService.bindExamCoupon(userInfo.getOpenId());
-            couponService.bindAnalyseCoupon(userInfo.getOpenId());
+            userRightService.sendGiftCoupon(userInfo.getOpenId());
         }
         userInfoDTO.setOpenId(userInfo.getOpenId());
         userInfoService.updateUserInfo(userInfoDTO);
@@ -187,6 +183,14 @@ public class UserController {
                                            @RequestParam int star){
         int remainTimes = userRightService.checkExamAvaliableTime(userInfo.getOpenId(),star);
         return new ResultBean(remainTimes);
+    }
+    /**
+     *  上传用户想要内推的公司
+     */
+    @RequestMapping("/uploadCompanys")
+    public ResultBean uploadCompanys(UserInfoEntity userInfo,
+                                     @RequestParam List<String> companys){
+        return new ResultBean(userInfoService.addCompanys(companys,userInfo.getOpenId()));
     }
 
 }

@@ -3,6 +3,7 @@ package com.gsy.base.common.aop;
 import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.gsy.base.common.bean.ResultBean;
 import com.gsy.base.common.exceptions.NoPermissionException;
+import com.gsy.base.common.exceptions.ParamentErroException;
 import com.gsy.base.web.entity.UserInfoEntity;
 import com.qcloud.weapp.authorization.LoginService;
 
@@ -41,6 +42,9 @@ public class AjaxControllerAOP {
     @Pointcut("execution(public * com.gsy.base.web.controller.ajaxcontroller.*.*(..))")
     public void controllerMethod(){}
 
+    @Pointcut("execution(public * com.gsy.base.web.controller.commonController.*.*(..))")
+    public void commonControllermethod(){}
+
     @Around("controllerMethod()")
     public void doBefore(ProceedingJoinPoint joinPoint) throws Throwable{
         long startTime = System.currentTimeMillis();
@@ -52,7 +56,7 @@ public class AjaxControllerAOP {
             if(isTest){
                 //注入测试openId
                 userInfoEntity = new UserInfoEntity();
-                userInfoEntity.setOpenId("test123");
+                userInfoEntity.setOpenId("o5TL-0FErAiYMqeXGCs0T1N2KlP4");
             }else{
                 LoginService service = new LoginService(request,response);
                 UserInfo userInfo = service.check();
@@ -71,12 +75,36 @@ public class AjaxControllerAOP {
         response.getWriter().write(new JSONObject(result).toString());
     }
 
+    @Around("commonControllermethod()")
+    public void aroundCommonController(ProceedingJoinPoint joinPoint) throws Throwable{
+        long startTime = System.currentTimeMillis();
+        ResultBean<?> result;
+        HttpServletRequest request = ((ServletRequestAttributes)RequestContextHolder.getRequestAttributes()).getRequest();
+        HttpServletResponse response = ((ServletRequestAttributes)RequestContextHolder.getRequestAttributes()).getResponse();
+        try {
+            Object[] args = joinPoint.getArgs();
+            result = (ResultBean) joinPoint.proceed(args);
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            logger.info("[{}use time: {}]",joinPoint.getSignature(),elapsedTime);
+        }catch (Throwable e){
+            result = handleException(joinPoint,e);
+        }
+        response.setContentType("application/json");
+        response.setCharacterEncoding("utf-8");
+        response.getWriter().write(new JSONObject(result).toString());
+    }
+
     private ResultBean handleException(ProceedingJoinPoint pjp,Throwable e){
         ResultBean<?> result = new ResultBean<>();
+        boolean test = e instanceof NoPermissionException;
+        logger.info("test={}",test);
         if(e instanceof NoPermissionException){
             result.setMessage(e.getLocalizedMessage());
             result.setCode(ResultBean.NO_PERMISSION);
-        }else{
+        } else if(e instanceof ParamentErroException) {
+            result.setMessage(e.getLocalizedMessage());
+            result.setCode(ResultBean.PARAMENT_ERRO);
+        } else{
             logger.error(pjp.getSignature()+" error",e);
             result.setMessage(e.toString());
             result.setCode(ResultBean.UNKNOWN_EXCEPTION);

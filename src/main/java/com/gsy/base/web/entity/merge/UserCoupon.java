@@ -10,11 +10,21 @@ public class UserCoupon {
 
     private int couponId;
 
+    private int usedFlag;
+
     private int remainTimes;
 
     private int source;
 
     private Date createTime;
+
+    public int getUsedFlag() {
+        return usedFlag;
+    }
+
+    public void setUsedFlag(int usedFlag) {
+        this.usedFlag = usedFlag;
+    }
 
     public int getSource() {
         return source;

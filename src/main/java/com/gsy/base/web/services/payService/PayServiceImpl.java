@@ -337,6 +337,7 @@ public class PayServiceImpl implements PayService {
             signInfo.setRepay_id("prepay_id="+repay_id);
 
             signInfo.setSignType("MD5");
+            signInfo.setCode(0);
             //生成签名
             signInfo.setPaySign(Signature.getSign(signInfo));
             return  signInfo;

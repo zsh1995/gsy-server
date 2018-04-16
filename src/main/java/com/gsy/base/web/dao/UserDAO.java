@@ -19,21 +19,34 @@ public interface UserDAO {
     int insertNewLoginUser(UserInfoDTO userinfo);
 
 
-    @Select("SELECT wu1.user_channel,wu1.id,wu1.student_name,wu1.school,wu1.major,wu1.phone_number,wu1.post,wu1.type,wu1.city,wu1.gender,wu1.wanted_company1,wu1.wanted_company2,wu1.wanted_company3,wu1.wanted_company4,wu1.wanted_company5,IF(wu2.student_name = '' OR wu2.student_name  = NULL,wu2.wechat_nick,wu2.student_name) as invitor, wu1.emailAddr FROM wechat_userinfo wu1 LEFT JOIN wechat_userinfo wu2 ON wu2.id = wu1.invitor WHERE wu1.openid =  #{openId}  AND wu1.delete_flag = 0")
+    @Select("SELECT wu1.enrollment_type,wu1.enrollment_year,wu1.user_channel,wu1.id,wu1.student_name,wu1.school,wu1.major,wu1.phone_number,wu1.post,wu1.type,wu1.city,wu1.gender,wu1.wanted_company1,wu1.wanted_company2,wu1.wanted_company3,wu1.wanted_company4,wu1.wanted_company5,if(wu2.student_name = '' OR wu2.student_name  = NULL,wu2.wechat_nick,wu2.student_name) as invitor, wu1.emailAddr FROM wechat_userinfo wu1 LEFT JOIN wechat_userinfo wu2 ON wu2.id = wu1.invitor WHERE wu1.openid =  #{openId}  AND wu1.delete_flag = 0")
     UserInfoDTO getUserInfo(String openId);
 
-    @Select("SELECT openId,avatar_url ,IFNULL(student_name,wechat_nick) as nick_name FROM wechat_userinfo WHERE id = #{id}")
+    @Select("SELECT openId,avatar_url ,IFNULL(student_name,wechat_nick) as nick_name ,invitor FROM wechat_userinfo WHERE id = #{id}")
     UserInfoDTO selectInvitor(Long id);
 
     @Update("UPDATE wechat_userinfo SET invitor = #{id} WHERE openId = #{openId}")
     int updateInvitor(@Param("id") Long id,@Param("openId") String openId);
 
-    @Update("UPDATE wechat_userinfo\n" +
-            "SET student_name = #{studentName}  ,school = #{school}  ,major =  #{major}  ,phone_number =  #{phoneNumber}  ,post=\n" +
-            " #{post}  ,type=  #{type}  ,city=  #{city}  ,gender=  #{gender}  ,company=  #{company} , emailAddr= #{emailAddr}  ,\n" +
-            "user_channel= #{userChannel}\n" +
-            "WHERE\n" +
-            " openId = #{openId}")
+    @Update({"<script>",
+            "UPDATE wechat_userinfo\n" +
+            "SET",
+            "<if test=\" studentName != null and studentName != ''\">student_name = #{studentName},</if>",
+            "<if test=\" school != null and school != ''\">school = #{school},</if>",
+            "<if test=\" major != null and major != ''\">major = #{major},</if>",
+            "<if test=\" phoneNumber != null and phoneNumber != ''\">phone_number = #{phoneNumber},</if> ",
+            "<if test=\" post != null and post != ''\">post = #{post},</if> ",
+            "<if test=\" type != null and type != ''\">type = #{type},</if>",
+            "<if test=\" city != null and city != ''\">city = #{city},</if>",
+            "<if test=\" gender != null and gender != ''\">gender = #{gender},</if>",
+            "<if test=\" company != null and company != ''\">company = #{company},</if>",
+            "<if test=\" emailAddr != null and emailAddr != ''\">emailAddr = #{emailAddr},</if>",
+            "<if test=\" enrollmentType != null and enrollmentType != ''\">enrollment_type = #{enrollmentType},</if>",
+            "<if test=\" enrollmentYear != null and enrollmentYear != ''\">enrollment_year = #{enrollmentYear},</if>",
+            "user_channel = #{userChannel} ",
+            "WHERE",
+            " openId = #{openId}",
+            "</script>"})
     int updateUserInfo(UserInfoDTO userInfo);
 
     @Insert("INSERT INTO wechat_user_right ( openId,\n" +
@@ -59,8 +72,9 @@ public interface UserDAO {
             "        openId = #{openId}   AND type =  #{type}   AND star =  #{star}")
     int updateUserRightRemainTimes(WechatUserRight userRight);
 
-    @Update("UPDATE purch_rel SET prop_value =  #{newTimes}   WHERE user_openId =  #{openId}   AND product_id =( SELECT product_id FROM product WHERE product_name = 'exam' AND prop_name = 'star' AND prop_value =  #{star}  ) AND prop_name = 'avaliable_times'")
-    int updateExamTimes(@Param("openId") String openId,@Param("star") int star,@Param("newTimes") int newTimes);
+    @Update("UPDATE purch_rel SET prop_value =  #{newTimes} ,valid_flag = #{validFlag}  WHERE user_openId =  #{openId}   AND product_id =( SELECT product_id FROM product WHERE product_name = 'exam' AND prop_name = 'star' AND prop_value =  #{star}  ) AND prop_name = 'avaliable_times' AND valid_flag = 1")
+    int updateExamTimes(@Param("openId") String openId,@Param("star") int star,@Param("newTimes") int newTimes,@Param("validFlag") int validFlag);
+
 
 
     @Insert("INSERT INTO exam_record_table(openId, star, pass_times,create_date) VALUE ( #{openId}  , #{star}  ,1,NOW()) ON DUPLICATE KEY UPDATE pass_times =  #{passTimes}  ,pass_flag =  #{passed}")
@@ -68,6 +82,9 @@ public interface UserDAO {
 
     @Select("SELECT pass_times FROM exam_record_table WHERE openId = #{openId} AND star = #{star}")
     int findExamPassTimes(@Param("openId") String openId,@Param("star") int star);
+
+    @Select("SELECT pass_flag FROM exam_record_table WHERE openId = #{openId} AND star = #{star}")
+    int findPassFlag(@Param("openId") String openId,@Param("star") int star);
 
     @Select("SELECT pr.id FROM purch_rel pr LEFT JOIN product prd ON pr.product_id = prd.product_id WHERE 1 = 1 AND prd.product_name = 'returnable' AND pr.user_openId = #{openId} AND pr.delete_flag != 1 LIMIT 1")
     long findReturnableById(String openId);
@@ -86,7 +103,7 @@ public interface UserDAO {
     @Select("SELECT * FROM append_auth WHERE openId = #{openId} AND delete_flag != 1")
     AppendEntity findAppend(String openId);
 
-    @Select("SELECT wu2.avatar_url, IF(wu2.student_name = '' OR wu2.student_name  = NULL,wu2.wechat_nick,wu2.student_name) as name FROM wechat_userinfo wu1 LEFT JOIN wechat_userinfo wu2 ON wu2.id = wu1.invitor WHERE wu1.openId = #{openId}")
+    @Select("SELECT wu2.avatar_url, if(wu2.student_name = '' OR wu2.student_name  = NULL,wu2.wechat_nick,wu2.student_name) as name FROM wechat_userinfo wu1 LEFT JOIN wechat_userinfo wu2 ON wu2.id = wu1.invitor WHERE wu1.openId = #{openId}")
     Map getMyInvitor(String openId);
 
     @Select("SELECT id FROM wechat_user_right WHERE openId =  #{openId}   AND type =  #{type}   AND questionId =  #{questionId}   AND star =  #{star}")

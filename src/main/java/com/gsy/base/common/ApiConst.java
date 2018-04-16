@@ -1,9 +1,24 @@
 package com.gsy.base.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 /**
  * Created by Administrator on 2017/7/7.
  */
+@Component
 public class ApiConst {
+
+    private Logger LOG = LoggerFactory.getLogger(ApiConst.class);
+
+    @Value("${gsy.shenhe.test}")
+    public void setShenHe(boolean test) {
+        ApiConst.TEST_SHENHE = test;
+        LOG.info("shenhe is:{}",test);
+    }
 
     public static final String FORMATE_DATE = "yyyyMMdd";
 
@@ -41,7 +56,7 @@ public class ApiConst {
 
     public static final String EXAM_FREE_THREE_TIME = "EXAM_FREE";
 
-    public static final boolean TEST_SHENHE=false;
+    public static boolean TEST_SHENHE=false;
 
     public static final String NEED_INIVITE_PRE = "NUM_INIVOT_STAR";
 
@@ -50,6 +65,8 @@ public class ApiConst {
     public static final String NEED_INVITE_2 = "NUM_INIVOT_STAR2";
 
     public static final String NEED_INVITE_3 = "NUM_INIVOT_STAR3";
+
+    public static final int[] NEEDED_PASSTIMES = {3,4,5};
 
     public static final String PASS_EXAM_PRE="NUM_EXAM_PASS_STAR";
 

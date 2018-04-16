@@ -2,6 +2,9 @@ package com.gsy.base.web.services.impl;
 
 import com.gsy.base.common.ApiConst;
 import com.gsy.base.common.ApiMethod;
+import com.gsy.base.common.RedisLockHelper;
+import com.gsy.base.common.exceptions.NoPermissionException;
+import com.gsy.base.common.exceptions.ParamentErroException;
 import com.gsy.base.web.dao.UserDAO;
 import com.gsy.base.web.dao.WechatPayDAO;
 import com.gsy.base.web.dto.UserInfoDTO;
@@ -22,6 +25,7 @@ import java.util.Map;
 /**
  * Created by Administrator on 2017/7/2.
  */
+@Transactional
 @Service
 public class UserInfoServiceImpl implements UserInfoService {
 
@@ -36,6 +40,9 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Autowired
     UserRightService userRightService;
 
+    @Autowired
+    RedisLockHelper redisLockHelper;
+
     @Override
     public UserInfoDTO getUserInfo(String openId) {
         return userDao.getUserInfo(openId);
@@ -43,14 +50,22 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     public boolean updateUserInfo(UserInfoDTO userInfoDTO){
-        long id = userDao.getUserInfo(userInfoDTO.getOpenId()).getId();
-        EnterpriseInfo enterpriseInfo = new EnterpriseInfo();
-        enterpriseInfo.setEnterpriseName(userInfoDTO.getWantedCompany1());companyService.addNewCompany(enterpriseInfo,id);
-        enterpriseInfo.setEnterpriseName(userInfoDTO.getWantedCompany2());companyService.addNewCompany(enterpriseInfo,id);
-        enterpriseInfo.setEnterpriseName(userInfoDTO.getWantedCompany3());companyService.addNewCompany(enterpriseInfo,id);
-        enterpriseInfo.setEnterpriseName(userInfoDTO.getWantedCompany4());companyService.addNewCompany(enterpriseInfo,id);
-        enterpriseInfo.setEnterpriseName(userInfoDTO.getWantedCompany5());companyService.addNewCompany(enterpriseInfo,id);
         userDao.updateUserInfo(userInfoDTO);
+        return true;
+    }
+
+    @Override
+    public boolean addCompanys(List<String> companyList, String openId){
+        long uid = userDao.getUserInfo(openId).getId();
+        int validCount = 0;
+        for(String company : companyList){
+            if(ApiMethod.isEmpty(company)) continue;
+            validCount+=1;
+            EnterpriseInfo enterpriseInfo = new EnterpriseInfo();
+            enterpriseInfo.setEnterpriseName(company);
+            companyService.addNewCompany(enterpriseInfo,uid);
+        }
+        if(validCount > 3) throw new ParamentErroException("内推公司数不能大于3！");
         return true;
     }
 
@@ -61,13 +76,34 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     public boolean updateUserInvitor(Long id, String openId) {
+        // redisLockHelper.getLock(RedisLockHelper.USERINFO_LOCK,RedisLockHelper.OPENID_LOCK,openId);
+        UserInfoDTO userInfoDTO = getInvitor(id);
+        UserInfoDTO ownInfo = getUserInfo(openId);
+        if(userInfoDTO == null){
+            throw new NoPermissionException("不存在用户");
+        }
+        if(openId.equals(userInfoDTO.getOpenId())){
+            throw new NoPermissionException("不能选择自己");
+        }
+        if(!ApiMethod.isEmpty(ownInfo.getInvitor()) || "0".equals(ownInfo.getInvitor())){
+            throw new NoPermissionException("已经设置！");
+        }
+        if(Long.parseLong(userInfoDTO.getInvitor()) == ownInfo.getId() ) {
+            throw new NoPermissionException("不能互相邀请！");
+        }
         userDao.updateInvitor(id,openId);
+        // redisLockHelper.releaseLock(RedisLockHelper.USERINFO_LOCK,RedisLockHelper.OPENID_LOCK,openId);
         return true;
     }
 
     @Override
     public List getPurchExamRecord(String openId) {
-        return (List<Map>) payDAO.getPurchExamRecord(openId);
+        List<Map> records = (List<Map>) payDAO.getPurchExamRecord(openId);
+        records.forEach(record->{
+            int price = Integer.parseInt((String) record.get("price"));
+            record.put("price",price / 100);
+        });
+        return records;
     }
 
     @Override
@@ -77,7 +113,7 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     public boolean checkEnroll(String openid) {
-        UserInfoDTO userInfoDTO =  getUserInfo(openid);
+        UserInfoDTO userInfoDTO = getUserInfo(openid);
         if(userInfoDTO.getUserChannel() == 1){
             return true;
         }
@@ -88,9 +124,10 @@ public class UserInfoServiceImpl implements UserInfoService {
     public int getInviteNums(String openId){
         return userDao.selectInvitedCount(openId);
     }
-    private boolean invitEnough(int invitNum,int star) throws Exception {
+    @Override
+    public boolean invitEnough(int invitNum, int star) throws Exception {
         int need = ApiMethod.getConstant(ApiConst.NEED_INIVITE_PRE+star);
-        if(need == 0) throw new Exception("获取邀请人数量参数错误！");
+        if(need == 0) throw new ParamentErroException("获取邀请人数量参数错误！");
         return invitNum >= need ;
     }
     @Override
@@ -111,14 +148,15 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Override
     public double calcAuthRank(String openId) throws Exception {
         double rank = 0;
-        // 检查考试通过情况
-        try {
-           int pass1 = userRightService.passExam(userRightService.getExamStatus(openId,1),1)? 1: 0;
-           int pass2 = userRightService.passExam(userRightService.getExamStatus(openId,2),2)? 1: 0;
-           int pass3 = userRightService.passExam(userRightService.getExamStatus(openId,3),3)? 1: 0;
-           rank = pass1+pass2+pass3;
-        } catch (Exception e) {
-            throw new Exception("计算等级出错，请联系管理员",e);
+        // 检查考试完成情况
+        for(int cnt = 0; cnt < 3; cnt++){
+            int star = cnt + 1;
+            boolean passExam = userRightService.passExam(userRightService.getExamStatus(openId,star),star);
+            boolean invitEnough = invitEnough(getInviteNums(openId),star);
+            if(passExam && invitEnough)
+                rank += 1;
+            else
+                break;
         }
         // 检查附加项完成情况
         boolean exercise = getExercisePass(openId);

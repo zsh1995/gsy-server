@@ -24,16 +24,20 @@ public interface UserRightService {
 
     int checkExamAvaliableTime(String openId, int star);
 
+    boolean sendGiftCoupon(String openId);
+
     //
 
 
-    boolean updateUserExamStatus(String openId, int star, boolean pass) throws Exception;
+    boolean updateUserExamStatus(String openId, int star, double score) throws Exception;
 
     boolean passExam(int passTimes, int star);
 
-    int getExamStatus(String openId, int star) throws Exception;
+    int getExamStatus(String openId, int star);
 
-    int updateExamTimes(String openId, int star, int delta) throws Exception;
+    boolean checkIsPassed(String openId, int star);
+
+    int updateExamTimes(String openId, int star, int newData, int validFlag) throws Exception;
 
     boolean checkReturnalbePurched(String openId) throws Exception;
 

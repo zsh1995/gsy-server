@@ -1,5 +1,6 @@
 package com.gsy.base.web.services.impl;
 
+import com.gsy.base.common.RedisLockHelper;
 import com.gsy.base.web.dao.UserDAO;
 import com.gsy.base.web.dto.UserInfoDTO;
 import com.gsy.base.web.services.LoginService;
@@ -7,6 +8,7 @@ import com.gsy.base.web.services.coupon.CouponService;
 import com.qcloud.weapp.authorization.UserInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.util.Scanner;
@@ -14,6 +16,7 @@ import java.util.Scanner;
 /**
  * Created by Administrator on 2017/6/18.
  */
+@Transactional
 @Service
 public class LoginServiceImpl implements LoginService {
 
@@ -21,28 +24,36 @@ public class LoginServiceImpl implements LoginService {
     private UserDAO userDAO;
     @Autowired
     private CouponService couponService;
+    @Autowired
+    RedisLockHelper redisLockHelper;
 
     @Override
     public boolean doLogin(UserInfo userInfo) {
-        if(!isExist(userInfo)) {
-            if (!couponService.bindAnalyseCoupon(userInfo.getOpenId())) {
-                //doing - nothing ....
-            }
-        }
+        if( !redisLockHelper.getLock(RedisLockHelper.USERINFO_LOCK,RedisLockHelper.OPENID_LOCK,userInfo.getOpenId()) ) return false;
         UserInfoDTO dto = new UserInfoDTO();
         dto.setOpenId(userInfo.getOpenId());
         dto.setNickName(userInfo.getNickName());
         dto.setAvatarUrl(userInfo.getAvatarUrl());
+        long id = isExist(userInfo);
         userDAO.insertNewLoginUser(dto);
+        if(id == 0) {
+            id = isExist(userInfo);
+            if(id == 0) return false;
+            if (!couponService.bindAnalyseCoupon(id,1)) {
+                //doing - nothing ....
+            }
+        }
+        redisLockHelper.releaseLock(RedisLockHelper.USERINFO_LOCK,RedisLockHelper.OPENID_LOCK,userInfo.getOpenId());
         return true;
     }
 
     @Override
-    public boolean isExist(UserInfo userInfo) {
-        if(userDAO.getUserInfo(userInfo.getOpenId()) == null){
-            return false;
+    public long isExist(UserInfo userInfo) {
+        UserInfoDTO userInfoDTO = userDAO.getUserInfo(userInfo.getOpenId());
+        if( userInfoDTO== null){
+            return 0;
         }
-        return true;
+        return userInfoDTO.getId();
     }
 
     public static int maxIn(int a,int b){
