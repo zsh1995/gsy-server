@@ -3,6 +3,7 @@ package com.gsy.base.web.services.impl;
 import com.gsy.base.beans.RedisBean;
 import com.gsy.base.common.exam.ExamHelper;
 import com.gsy.base.web.dao.ExamQuestionMapper;
+import com.gsy.base.web.dto.RedisItemDTO;
 import com.gsy.base.web.entity.Question;
 import com.gsy.base.web.services.ExamService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ public class ExamServiceImpl implements ExamService {
     @Override
     public boolean checkExamExist(long uid,ExamHelper.ExamStar star) {
         String key = redisUid(uid,star);
-        List qList = (List)redisBean.get(key);
+        RedisItemDTO qList = (RedisItemDTO)redisBean.get(key);
         return qList != null;
     }
 
@@ -38,14 +39,15 @@ public class ExamServiceImpl implements ExamService {
     @Override
     public List getQuestions(long uid, ExamHelper.ExamStar star) {
         String key = redisUid(uid,star);
-        List<Question> questionList = (List)redisBean.get(key.toString());
-        if(questionList != null){
+        RedisItemDTO<List<Question>> holder = (RedisItemDTO)redisBean.get(key.toString());
+        List questionList = holder.getItem();
+        if(holder != null && questionList != null){
             return questionList;
         }
         // 从数据库随机拿6道题
         questionList = examQuestionMapper.getExamQuestions(star.getCode());
         // 封装为redis类型
-        redisBean.set(key.toString(),questionList);
+        redisBean.set(key.toString(),new RedisItemDTO(questionList));
         return questionList;
     }
     @Override
@@ -57,9 +59,9 @@ public class ExamServiceImpl implements ExamService {
     @Override
     public double calcScore(long uid, ExamHelper.ExamStar star, List<Integer> chooseList) throws Exception {
         String key = redisUid(uid,star);
-        List qList = (List)redisBean.get(key);
-        if(qList == null) throw new Exception("exam timeout limited");
+        RedisItemDTO<List<Question>> redisItem = (RedisItemDTO)redisBean.get(key);
+        if(redisItem == null) throw new Exception("exam timeout limited");
         redisBean.delete(key);
-        return ExamHelper.calculateScore(qList,chooseList);
+        return ExamHelper.calculateScore(redisItem.getItem(),chooseList);
     }
 }

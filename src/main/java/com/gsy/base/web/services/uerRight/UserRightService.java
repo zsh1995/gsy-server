@@ -29,6 +29,9 @@ public interface UserRightService {
     //
 
 
+
+    boolean updateUserExamStatus(long id, int star, double score) throws Exception;
+
     boolean updateUserExamStatus(String openId, int star, double score) throws Exception;
 
     boolean passExam(int passTimes, int star);

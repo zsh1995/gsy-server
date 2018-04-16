@@ -8,10 +8,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.swing.text.html.Option;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
@@ -41,6 +38,10 @@ public class RedisBean {
     }
     public void delete(String name){
         redisTemplate.delete(name);
+    }
+
+    public Set getAll(){
+        return template.keys("*");
     }
 
 }

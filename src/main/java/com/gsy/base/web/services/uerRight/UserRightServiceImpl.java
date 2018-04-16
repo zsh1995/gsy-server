@@ -134,6 +134,38 @@ public class UserRightServiceImpl implements UserRightService {
         return true;
     }
 
+    @Override
+    public boolean updateUserExamStatus(long id, int star, double score) throws Exception {
+        String openId = userDAO.selectOpenIdById(id);
+        int passTimes = 0;
+        boolean pass = score >= 54;
+        try{
+            passTimes = getExamStatus(openId,star);
+        } catch (Exception e){
+            passTimes = 0;
+        }
+        boolean isLastExam = checkExamAvaliableTime(openId,star) == 0;
+        boolean passFlag = checkIsPassed(openId,star);
+
+        if(isLastExam){
+            userRightService.updateExamTimes(openId,star,0,0);
+            if(!passFlag){
+                userDAO.updateExamPassTimes(openId,star,0,0);
+            }
+        }
+        if(pass){
+            userDAO.updateExamPassTimes(openId,star,passTimes+1,checkIsPass(passTimes+1,star)?1:0);
+        }
+        // 记录分数
+        PracticeRecordDTO dto = new PracticeRecordDTO();
+        dto.setQuestionGroup(100);
+        dto.setStars(star);
+        dto.setScore(score);
+        uploadScoreService.uploadScore(openId,dto);
+
+        return true;
+    }
+
 
     @Override
     public boolean updateUserExamStatus(String openId, int star, double score) throws Exception {
@@ -188,7 +220,12 @@ public class UserRightServiceImpl implements UserRightService {
 
     @Override
     public boolean checkIsPassed(String openId,int star){
-        int passFlag = userDAO.findPassFlag(openId,star);
+        int passFlag = 0;
+        try{
+            passFlag = userDAO.findPassFlag(openId,star);
+        }catch (Exception e){
+            // 无数据
+        }
         return passFlag == 1;
     }
 

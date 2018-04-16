@@ -4,6 +4,7 @@ import com.gsy.base.web.dto.AppendEntity;
 import com.gsy.base.web.dto.UserInfoDTO;
 import com.gsy.base.web.entity.merge.WechatUserRight;
 import org.apache.ibatis.annotations.*;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
@@ -108,5 +109,11 @@ public interface UserDAO {
 
     @Select("SELECT id FROM wechat_user_right WHERE openId =  #{openId}   AND type =  #{type}   AND questionId =  #{questionId}   AND star =  #{star}")
     long selecteUserRightAnalyse(WechatUserRight userRight);
+
+    @Select("SELECT id FROM wechat_userinfo WHERE openId = #{openId}")
+    long selectIdByOpenId(String openId);
+
+    @Select("SELECT openId FROM wechat_userinfo WHERE id = #{id}")
+    String selectOpenIdById(long id);
 
 }
