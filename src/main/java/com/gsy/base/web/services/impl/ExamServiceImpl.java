@@ -1,15 +1,19 @@
 package com.gsy.base.web.services.impl;
 
+import com.gsy.base.beans.ExamQueue;
 import com.gsy.base.beans.RedisBean;
 import com.gsy.base.common.exam.ExamHelper;
 import com.gsy.base.web.dao.ExamQuestionMapper;
 import com.gsy.base.web.dto.RedisItemDTO;
 import com.gsy.base.web.entity.Question;
 import com.gsy.base.web.services.ExamService;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
 
 
 /**
@@ -18,16 +22,22 @@ import java.util.List;
 @Service
 public class ExamServiceImpl implements ExamService {
 
+    public static Logger logger = Logger.getLogger(ExamService.class);
     @Autowired
     private ExamQuestionMapper examQuestionMapper;
 
     @Autowired
     private RedisBean redisBean ;
 
+    @Autowired
+    private BeanFactory beanFactory;
+
+
     @Override
     public boolean checkExamExist(long uid,ExamHelper.ExamStar star) {
         String key = redisUid(uid,star);
-        RedisItemDTO qList = (RedisItemDTO)redisBean.get(key);
+        RedisItemDTO<List<Question>> qList = (RedisItemDTO<List<Question>>)redisBean.get(key);
+        logger.info(qList);
         return qList != null;
     }
 
@@ -38,12 +48,17 @@ public class ExamServiceImpl implements ExamService {
     }
     @Override
     public List getQuestions(long uid, ExamHelper.ExamStar star) {
+        ExamQueue examQueue = (ExamQueue) beanFactory.getBean("examQueue");
         String key = redisUid(uid,star);
         RedisItemDTO<List<Question>> holder = (RedisItemDTO)redisBean.get(key.toString());
-        List questionList = holder.getItem();
-        if(holder != null && questionList != null){
-            return questionList;
+        List questionList = null;
+        if(holder != null){
+            questionList = holder.getItem();
+            if(questionList != null){
+                return questionList;
+            }
         }
+        examQueue.putExam(uid,star.getCode());
         // 从数据库随机拿6道题
         questionList = examQuestionMapper.getExamQuestions(star.getCode());
         // 封装为redis类型

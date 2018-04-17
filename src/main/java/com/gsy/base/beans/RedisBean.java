@@ -18,14 +18,11 @@ import java.util.function.Predicate;
 @Component
 public class RedisBean {
 
+    @Autowired
     private StringRedisTemplate template;
     @Autowired
     private RedisTemplate redisTemplate;
 
-    @Autowired
-    public RedisBean(StringRedisTemplate template){
-        this.template = template;
-    }
 
     public Object get(String name){
         return redisTemplate.opsForValue().get(name);
@@ -41,7 +38,9 @@ public class RedisBean {
     }
 
     public Set getAll(){
-        return template.keys("*");
+        Set keySet = template.keys("*");
+        if(keySet == null) return new HashSet();
+        return keySet;
     }
 
 }

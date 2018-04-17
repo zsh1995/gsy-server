@@ -5,12 +5,15 @@ import com.gsy.base.web.services.ExamService;
 import com.gsy.base.web.services.uerRight.UserRightService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 
 /**
  * Created by mrzsh on 2018/4/16.
  */
+@Scope("prototype")
+@Component
 public class ExamTask implements Runnable {
 
     public static Logger logger = Logger.getLogger(ExamTask.class);
@@ -47,8 +50,9 @@ public class ExamTask implements Runnable {
 
     @Override
     public void run() {
-        examService.deleteExam(uid, ExamHelper.ExamStar.build(examStar));
         try {
+            logger.info(String.format("cleaning,uid={},examStar={}",uid,examStar));
+            examService.deleteExam(uid, ExamHelper.ExamStar.build(examStar));
             userRightService.updateUserExamStatus(uid,examStar,0.0F);
         } catch (Exception e) {
             logger.error("examtask run erro",e);

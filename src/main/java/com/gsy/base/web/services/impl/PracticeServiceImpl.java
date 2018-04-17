@@ -1,5 +1,6 @@
 package com.gsy.base.web.services.impl;
 
+
 import com.gsy.base.common.ApiConst;
 import com.gsy.base.common.ApiMethod;
 import com.gsy.base.common.exam.ExamHelper;
@@ -37,6 +38,7 @@ public class PracticeServiceImpl implements PracticeService {
     UserDAO userDAO;
     @Autowired
     UploadScoreDAO uploadScoreDAO;
+;
 
     @Autowired
     PayService payService;
