@@ -55,7 +55,7 @@ public class ExamQueue {
             String keyName = it.next();
             RedisItemDTO<List<Question>> list = (RedisItemDTO<List<Question>>) redisBean.get(it.next());
             long elapsedTime = System.nanoTime() - list.getCreateTime();
-            long nano30Min = TimeUnit.NANOSECONDS.convert(10,TimeUnit.MINUTES);
+            long nano30Min = NANO30MIN;
             if( elapsedTime >= nano30Min){
                 redisBean.delete(keyName);
             } else{
@@ -100,7 +100,7 @@ public class ExamQueue {
 
     public void putExam(long uid,int star){
         ExamTask examTask = (ExamTask) beanFactory.getBean("examTask",uid,star);
-        put(10,examTask,TimeUnit.MINUTES);
+        put(30,examTask,TimeUnit.MINUTES);
     }
 
     public boolean endTask(DelayItem<Runnable> task){

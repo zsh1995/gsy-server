@@ -28,7 +28,7 @@ public class RedisBean {
         return redisTemplate.opsForValue().get(name);
     }
     public void set(String name,Object T){
-        redisTemplate.opsForValue().set(name,T,30, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set(name,T,60, TimeUnit.MINUTES);
     }
     public void set(String name,Object T,int time){
         redisTemplate.opsForValue().set(name,T,time, TimeUnit.MILLISECONDS);
