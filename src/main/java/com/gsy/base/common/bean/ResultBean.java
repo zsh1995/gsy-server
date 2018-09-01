@@ -14,7 +14,7 @@ public class ResultBean<T> extends BaseEntity implements Serializable{
 
     public static final int SUCCESS = 0;
 
-    public static final int CHECK_FAIL = 1;
+    public static final int NO_USER = 1;
 
     public static final int NO_PERMISSION = 2;
 

@@ -2,6 +2,7 @@ package com.gsy.base.web.services;
 
 
 
+import com.gsy.base.common.exceptions.ParamentErroException;
 import com.gsy.base.web.dto.UserInfoDTO;
 import com.gsy.base.web.entity.merge.EnterpriseInfo;
 
@@ -38,6 +39,10 @@ public interface UserInfoService {
     boolean getPracticePass(String openId);
 
     double calcAuthRank(String openId) throws Exception;
+
+    String getOpenIdByPhone(String phone) throws ParamentErroException;
+
+    double getRankByPhone(String phone) throws ParamentErroException;
 
     Map getMyInvitor(String openId);
 }

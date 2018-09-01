@@ -43,4 +43,15 @@ public class ExamCenterControllerTest {
                 .andExpect(MockMvcResultMatchers.content().string(Matchers.containsString("SUCCESS")));
     }
 
+    @Test
+    public void apiTest() throws Exception{
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/user/15624952399/star")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("key","20180516gsyapi")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.content().string(Matchers.containsString("用户不存在")));
+    }
+
 }

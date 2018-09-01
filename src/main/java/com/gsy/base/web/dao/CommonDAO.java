@@ -10,4 +10,7 @@ import org.apache.ibatis.annotations.Select;
 public interface CommonDAO {
     @Select("SELECT dict_value FROM dict_table WHERE dict_name = #{name}")
     int selectConst(String name);
+
+    @Select("SELECT count(id) FROM pki WHERE secret_key = #{key} AND valid=1")
+    int countPKI(String secretKey);
 }

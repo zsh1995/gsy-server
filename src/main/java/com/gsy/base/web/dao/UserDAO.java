@@ -29,6 +29,10 @@ public interface UserDAO {
     @Update("UPDATE wechat_userinfo SET invitor = #{id} WHERE openId = #{openId}")
     int updateInvitor(@Param("id") Long id,@Param("openId") String openId);
 
+    @Select("SELECT openId FROM wechat_userinfo WHERE phone_number =#{phone}")
+    String queryOpenIdByPhone(String phone);
+
+
     @Update({"<script>",
             "UPDATE wechat_userinfo\n" +
             "SET",

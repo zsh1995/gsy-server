@@ -4,6 +4,7 @@ import com.gsy.base.common.ApiConst;
 import com.gsy.base.common.ApiMethod;
 import com.gsy.base.common.RedisLockHelper;
 import com.gsy.base.common.exceptions.NoPermissionException;
+import com.gsy.base.common.exceptions.NoUserException;
 import com.gsy.base.common.exceptions.ParamentErroException;
 import com.gsy.base.web.dao.UserDAO;
 import com.gsy.base.web.dao.WechatPayDAO;
@@ -125,7 +126,7 @@ public class UserInfoServiceImpl implements UserInfoService {
         return userDao.selectInvitedCount(openId);
     }
     @Override
-    public boolean invitEnough(int invitNum, int star) throws Exception {
+    public boolean invitEnough(int invitNum, int star) throws ParamentErroException {
         int need = ApiMethod.getConstant(ApiConst.NEED_INIVITE_PRE+star);
         if(need == 0) throw new ParamentErroException("获取邀请人数量参数错误！");
         return invitNum >= need ;
@@ -146,7 +147,7 @@ public class UserInfoServiceImpl implements UserInfoService {
     }
 
     @Override
-    public double calcAuthRank(String openId) throws Exception {
+    public double calcAuthRank(String openId) throws ParamentErroException {
         double rank = 0;
         // 检查考试完成情况
         for(int cnt = 0; cnt < 3; cnt++){
@@ -164,6 +165,19 @@ public class UserInfoServiceImpl implements UserInfoService {
         rank += exercise && practice ? 0.5:0;
         //
         return rank;
+    }
+
+    @Override
+    public String getOpenIdByPhone(String phone) throws ParamentErroException {
+        String formatePhone = phone.trim().replaceAll("[^\\d]","");
+        if(ApiMethod.isEmpty(formatePhone) || formatePhone.length() != 11 ) throw new ParamentErroException("手机号格式不正确");
+        String openId = userDao.queryOpenIdByPhone(phone);
+        if(ApiMethod.isEmpty(openId)) throw new NoUserException("该用户不存在");
+        return openId;
+    }
+    @Override
+    public double getRankByPhone(String phone) throws ParamentErroException{
+        return calcAuthRank(getOpenIdByPhone(phone));
     }
 
     @Override

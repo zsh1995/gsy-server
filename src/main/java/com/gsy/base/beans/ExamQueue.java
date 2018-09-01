@@ -42,7 +42,7 @@ public class ExamQueue {
 
     private Thread daemonThread;
 
-    public static final long NANO30MIN = TimeUnit.NANOSECONDS.convert(1,TimeUnit.MINUTES);
+    public static final long NANO30MIN = TimeUnit.NANOSECONDS.convert(30,TimeUnit.MINUTES);
 
     public void load(){
         Set set = redisBean.getAll();
