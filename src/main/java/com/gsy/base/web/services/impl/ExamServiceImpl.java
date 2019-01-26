@@ -7,6 +7,8 @@ import com.gsy.base.web.dao.ExamQuestionMapper;
 import com.gsy.base.web.dto.RedisItemDTO;
 import com.gsy.base.web.entity.Question;
 import com.gsy.base.web.services.ExamService;
+import com.gsy.base.web.services.UserInfoService;
+import com.gsy.base.web.services.payService.PayService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,12 @@ public class ExamServiceImpl implements ExamService {
     @Autowired
     private BeanFactory beanFactory;
 
+    @Autowired
+    private PayService payService;
+
+    @Autowired
+    private UserInfoService userInfoService;
+
 
     @Override
     public boolean checkExamExist(long uid,ExamHelper.ExamStar star) {
@@ -51,20 +59,25 @@ public class ExamServiceImpl implements ExamService {
         ExamQueue examQueue = (ExamQueue) beanFactory.getBean("examQueue");
         String key = redisUid(uid,star);
         RedisItemDTO<List<Question>> holder = (RedisItemDTO)redisBean.get(key.toString());
-        List questionList = null;
+        List<Question> questionList = null;
         if(holder != null){
             questionList = holder.getItem();
-            if(questionList != null){
-                return questionList;
-            }
         }
-        examQueue.putExam(uid,star.getCode());
-        // 从数据库随机拿6道题
-        questionList = examQuestionMapper.getExamQuestions(star.getCode());
-        // 封装为redis类型
-        redisBean.set(key.toString(),new RedisItemDTO(questionList));
+        if(questionList == null){
+            examQueue.putExam(uid,star.getCode());
+            // 从数据库随机拿6道题
+            questionList = examQuestionMapper.getExamQuestions(star.getCode());
+            // 封装为redis类型
+            redisBean.set(key.toString(),new RedisItemDTO(questionList));
+        }
+        questionList.forEach((question)->{
+            question.setIsPurchAnalyse(payService.checkAnalysePurched(userInfoService.getOpenId(uid), star.getCode(), (int) question.getId())?1:0);
+        });
         return questionList;
     }
+
+
+
     @Override
     public void deleteExam(long uid, ExamHelper.ExamStar star) {
         String key = redisUid(uid,star);

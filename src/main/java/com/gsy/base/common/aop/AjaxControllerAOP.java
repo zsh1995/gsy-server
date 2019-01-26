@@ -8,6 +8,7 @@ import com.gsy.base.web.entity.UserInfoEntity;
 import com.gsy.base.web.services.SecurityService;
 import com.qcloud.weapp.authorization.LoginService;
 
+import com.qcloud.weapp.authorization.LoginServiceException;
 import com.qcloud.weapp.authorization.UserInfo;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -140,7 +141,10 @@ public class AjaxControllerAOP {
         } else if(e instanceof NoUserException){
             result.setMessage(e.getLocalizedMessage());
             result.setCode(ResultBean.NO_USER);
-        }else{
+        } else if(e instanceof LoginServiceException){
+            result.setMessage(e.getLocalizedMessage());
+            result.setCode(ResultBean.NO_LOGIN);
+        } else{
             logger.error(pjp.getSignature()+" error",e);
             result.setMessage(e.toString());
             result.setCode(ResultBean.UNKNOWN_EXCEPTION);

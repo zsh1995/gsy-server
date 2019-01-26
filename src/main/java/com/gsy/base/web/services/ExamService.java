@@ -10,9 +10,18 @@ import java.util.List;
 public interface ExamService {
 
 
-
+    /**
+     * @param uid 用户id
+     * @param star 考试星级
+     * @return 是否存在考试
+     */
     boolean checkExamExist(long uid, ExamHelper.ExamStar star);
 
+    /**
+     * @param uid 用户id
+     * @param star 考试星级
+     * @return 获得试题
+     */
     List getQuestions(long uid, ExamHelper.ExamStar star);
 
     void deleteExam(long uid, ExamHelper.ExamStar star);

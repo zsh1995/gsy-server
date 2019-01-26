@@ -22,6 +22,13 @@ public interface UserDAO {
 
     @Select("SELECT wu1.enrollment_type,wu1.enrollment_year,wu1.user_channel,wu1.id,wu1.student_name,wu1.school,wu1.major,wu1.phone_number,wu1.post,wu1.type,wu1.city,wu1.gender,wu1.wanted_company1,wu1.wanted_company2,wu1.wanted_company3,wu1.wanted_company4,wu1.wanted_company5,if(wu2.student_name = '' OR wu2.student_name  = NULL,wu2.wechat_nick,wu2.student_name) as invitor, wu1.emailAddr FROM wechat_userinfo wu1 LEFT JOIN wechat_userinfo wu2 ON wu2.id = wu1.invitor WHERE wu1.openid =  #{openId}  AND wu1.delete_flag = 0")
     UserInfoDTO getUserInfo(String openId);
+    @Select("SELECT\n" +
+            "\topenId\n" +
+            "FROM\n" +
+            "\twechat_userinfo\n" +
+            "WHERE\n" +
+            "\tid = #{uid} ")
+    String getOpenId(long uid);
 
     @Select("SELECT openId,avatar_url ,IFNULL(student_name,wechat_nick) as nick_name ,invitor FROM wechat_userinfo WHERE id = #{id}")
     UserInfoDTO selectInvitor(Long id);

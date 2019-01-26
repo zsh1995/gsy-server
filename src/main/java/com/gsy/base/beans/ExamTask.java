@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.text.MessageFormat;
+
 
 /**
  * Created by mrzsh on 2018/4/16.
@@ -51,7 +53,7 @@ public class ExamTask implements Runnable {
     @Override
     public void run() {
         try {
-            logger.info(String.format("cleaning,uid={},examStar={}",uid,examStar));
+            logger.info(MessageFormat.format("cleaning,uid={0},examStar={1}",uid,examStar));
             examService.deleteExam(uid, ExamHelper.ExamStar.build(examStar));
             userRightService.updateUserExamStatus(uid,examStar,0.0F);
         } catch (Exception e) {

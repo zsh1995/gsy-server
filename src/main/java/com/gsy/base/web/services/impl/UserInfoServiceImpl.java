@@ -50,6 +50,11 @@ public class UserInfoServiceImpl implements UserInfoService {
     }
 
     @Override
+    public String getOpenId(long id) {
+        return userDao.getOpenId(id);
+    }
+
+    @Override
     public boolean updateUserInfo(UserInfoDTO userInfoDTO){
         userDao.updateUserInfo(userInfoDTO);
         return true;

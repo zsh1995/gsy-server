@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -27,6 +28,9 @@ public class ExamQueue {
 
 
     private static final Logger logger = Logger.getLogger(ExamQueue.class);
+
+    private static final int TIMMER_COUNT_MINUTES = 120;
+
     @Autowired
     public ExamQueue(RedisBean redisBean,BeanFactory beanFactory){
         this.redisBean = redisBean;
@@ -42,7 +46,6 @@ public class ExamQueue {
 
     private Thread daemonThread;
 
-    public static final long NANO30MIN = TimeUnit.NANOSECONDS.convert(30,TimeUnit.MINUTES);
 
     public void load(){
         Set set = redisBean.getAll();
@@ -53,15 +56,15 @@ public class ExamQueue {
         Iterator<String> it = set.iterator();
         while (it.hasNext()){
             String keyName = it.next();
-            RedisItemDTO<List<Question>> list = (RedisItemDTO<List<Question>>) redisBean.get(it.next());
+            RedisItemDTO<List<Question>> list = (RedisItemDTO<List<Question>>) redisBean.get(keyName);
             long elapsedTime = System.nanoTime() - list.getCreateTime();
-            long nano30Min = NANO30MIN;
-            if( elapsedTime >= nano30Min){
+            long settingTime = TimeUnit.NANOSECONDS.convert(TIMMER_COUNT_MINUTES,TimeUnit.MINUTES);
+            if( elapsedTime >= settingTime){
                 redisBean.delete(keyName);
             } else{
                 String[] args = keyName.split("-");
                 ExamTask task = (ExamTask) beanFactory.getBean("examTask",Long.valueOf(args[0]),Integer.valueOf(args[1]));
-                put(nano30Min - elapsedTime ,task,TimeUnit.NANOSECONDS);
+                put(settingTime - elapsedTime ,task,TimeUnit.NANOSECONDS);
             }
         }
     }
@@ -78,12 +81,12 @@ public class ExamQueue {
         });
         daemonThread.start();
     }
-    private DelayQueue<DelayItem<?>> item = new DelayQueue<>();
+    private DelayQueue<DelayItem<Runnable>> item = new DelayQueue<>();
 
     private void execute() throws InterruptedException{
         while(true){
             Map<Thread,StackTraceElement[]> map = Thread.getAllStackTraces();
-            DelayItem<?> t = item.take();
+            DelayItem<Runnable> t = item.take();
             if(t != null){
                 Runnable task = t.getTask();
                 if( task == null) continue;
@@ -94,13 +97,14 @@ public class ExamQueue {
 
     public void put(long time, Runnable task, TimeUnit timeUnit){
         long nanoTime = TimeUnit.NANOSECONDS.convert(time,timeUnit);
-        DelayItem<?> k = new DelayItem<>(nanoTime,task);
+        DelayItem<Runnable> k = new DelayItem<>(nanoTime,task);
         item.put(k);
     }
 
     public void putExam(long uid,int star){
+        logger.info(MessageFormat.format("exam enqueue, uid = {0},start = {1}", uid, star));
         ExamTask examTask = (ExamTask) beanFactory.getBean("examTask",uid,star);
-        put(30,examTask,TimeUnit.MINUTES);
+        put(TIMMER_COUNT_MINUTES,examTask,TimeUnit.MINUTES);
     }
 
     public boolean endTask(DelayItem<Runnable> task){

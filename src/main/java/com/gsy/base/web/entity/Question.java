@@ -17,6 +17,16 @@ public class Question extends BaseEntity{
 
     private String analysis;
 
+    private int isPurchAnalyse;
+
+    public int getIsPurchAnalyse() {
+        return isPurchAnalyse;
+    }
+
+    public void setIsPurchAnalyse(int isPurchAnalyse) {
+        this.isPurchAnalyse = isPurchAnalyse;
+    }
+
     public long getId() {
         return id;
     }

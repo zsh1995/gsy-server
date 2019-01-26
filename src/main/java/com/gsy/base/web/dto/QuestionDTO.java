@@ -18,7 +18,7 @@ public class QuestionDTO {
 
     private String tips;
 
-    private String analyse;
+    private String analysis;
 
     public Integer getIsPurchAnalyse() {
         return isPurchAnalyse;
@@ -68,12 +68,12 @@ public class QuestionDTO {
         this.tips = tips;
     }
 
-    public String getAnalyse() {
-        return analyse;
+    public String getAnalysis() {
+        return analysis;
     }
 
-    public void setAnalyse(String analyse) {
-        this.analyse = analyse;
+    public void setAnalysis(String analysis) {
+        this.analysis = analysis;
     }
 
 }

@@ -16,6 +16,8 @@ public interface UserInfoService {
 
     UserInfoDTO getUserInfo(String openId);
 
+    String getOpenId(long id);
+
     boolean updateUserInfo(UserInfoDTO userInfoDTO) throws Exception;
 
     boolean addCompanys(List<String> companyList, String openId);

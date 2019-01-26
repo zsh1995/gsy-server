@@ -66,8 +66,8 @@ public class PracticeServiceImpl implements PracticeService {
             questions = questionDAO.getQuestionWork(openId,groupId);
         }
         for(QuestionDTO temp : questions){
-            if( !ApiMethod.isEmpty(temp.getAnalyse())){
-                temp.setAnalyse("存在解析");
+            if( !ApiMethod.isEmpty(temp.getAnalysis())){
+                temp.setAnalysis("存在解析");
             }
         }
         if(ApiConst.TEST_SHENHE){

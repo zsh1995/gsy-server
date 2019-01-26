@@ -44,7 +44,7 @@ public interface WechatPayDAO {
             "WHERE pp.openId = #{openId} AND transaction_flag = 1 AND pp.delete_flag = 0 GROUP BY pd.prepay_id")
     List<Map> getPurchExamRecord(String openId);
 
-    @Select("SELECT * FROM ( SELECT pr.product_id AS product_id, MAX(CASE pr.prop_name WHEN 'star' THEN pr.prop_value ELSE 0 END) AS star, MAX(CASE pr.prop_name WHEN 'questionId' THEN pr.prop_value ELSE 0 END) AS question_id FROM purch_rel pr WHERE pr.product_id = 1 AND pr.user_openId = #{openId} AND delete_flag != 1 GROUP BY pr.group_id ) temp WHERE temp.star = #{star} AND temp.question_id = #{questionId}")
+    @Select("SELECT * FROM ( SELECT pr.product_id AS product_id, MAX(CASE pr.prop_name WHEN 'star' THEN pr.prop_value ELSE 0 END) AS star, MAX(CASE pr.prop_name WHEN 'questionId' THEN pr.prop_value ELSE 0 END) AS question_id FROM purch_rel pr WHERE pr.product_id = 1 AND pr.user_openId = #{openId} AND delete_flag != 1 GROUP BY pr.group_id ) temp WHERE temp.star = #{star} AND temp.question_id = #{questionId} LIMIT 1")
     PurchAnalyseDTO getAnalyseRecord(@Param("openId") String openId,@Param("star") int star,@Param("questionId") int questionId);
 
     @Select("SELECT product_id,star,MAX(avaliable_times) as avaliable_times FROM( SELECT pr.product_id AS product_id, max( CASE pr.prop_name WHEN 'star' THEN pr.prop_value ELSE 0 END) AS star, max( CASE pr.prop_name WHEN 'avaliable_times' THEN pr.prop_value ELSE 0 END ) AS avaliable_times FROM purch_rel pr WHERE pr.delete_flag != 1 AND pr.valid_flag = 1 AND pr.user_openId = #{openId} GROUP BY pr.group_id ) temp WHERE temp.star = #{star} AND temp.product_id != 1")
