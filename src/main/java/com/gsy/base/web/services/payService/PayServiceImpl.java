@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.beans.Transient;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -27,6 +26,9 @@ public class PayServiceImpl implements PayService {
 
     @Autowired
     private WechatPayDAO wechatPayDAO;
+
+    @Autowired
+    private PayConstanst payConstanst;
 
     public static Logger L = Logger.getLogger(PayServiceImpl.class);
 
@@ -196,8 +198,8 @@ public class PayServiceImpl implements PayService {
         StringBuilder bodyBuilder = new StringBuilder("高商联盟-");
         int price = 0;
         try {
-            OrderInfoDTO order = PayConstanst.getInstance().loadInitData();
-            order.setNonce_str(RandomStringGenerator.getRandomStringByLength(32));
+            OrderInfoDTO order = payConstanst.loadInitData();
+            order.setNonce_str(QcloudRandomStringGenerator.getRandomStringByLength(32));
             order.setOut_trade_no(generateOutTradeNo(ApiConst.PURCH_TYPE_EXAM,star));
             switch (star){
                 case 1:bodyBuilder.append("一星级考试");price = (int) wechatPayDAO.getPrice(ApiConst.PRODUCT_EXAM_1);break;
@@ -211,10 +213,7 @@ public class PayServiceImpl implements PayService {
             String sign = Signature.getSign(order);
             order.setSign(sign);
             return order;
-        }catch (IOException e){
-            e.printStackTrace();
-            throw e;
-        } catch (IllegalAccessException e) {
+        }catch (IllegalAccessException e) {
             throw e;
         }
     }
@@ -223,8 +222,8 @@ public class PayServiceImpl implements PayService {
         StringBuilder bodyBuilder = new StringBuilder("高商联盟-");
         int price = 0;
         try {
-            OrderInfoDTO order = PayConstanst.getInstance().loadInitData();
-            order.setNonce_str(RandomStringGenerator.getRandomStringByLength(32));
+            OrderInfoDTO order = payConstanst.loadInitData();
+            order.setNonce_str(QcloudRandomStringGenerator.getRandomStringByLength(32));
             order.setOut_trade_no(generateOutTradeNo(ApiConst.PURCH_TYPE_ANALYSE,star,0,questionId));
             price = (int) wechatPayDAO.getPrice(ApiConst.PRODUCT_ANALYSE);
             bodyBuilder.append("试题解析")
@@ -237,9 +236,6 @@ public class PayServiceImpl implements PayService {
             String sign = Signature.getSign(order);
             order.setSign(sign);
             return order;
-        }catch (IOException e){
-            e.printStackTrace();
-            throw e;
         } catch (IllegalAccessException e) {
             e.printStackTrace();
             throw e;
@@ -250,8 +246,8 @@ public class PayServiceImpl implements PayService {
         StringBuilder bodyBuilder = new StringBuilder("高商联盟-");
         int price = 0;
         try {
-            OrderInfoDTO order = PayConstanst.getInstance().loadInitData();
-            order.setNonce_str(RandomStringGenerator.getRandomStringByLength(32));
+            OrderInfoDTO order = payConstanst.loadInitData();
+            order.setNonce_str(QcloudRandomStringGenerator.getRandomStringByLength(32));
             order.setOut_trade_no(generateReturnableOutTradeNo());
             price = (int) wechatPayDAO.getPrice(ApiConst.PRODUCT_RETURNABLE);
             bodyBuilder.append("加急押金");
@@ -262,9 +258,6 @@ public class PayServiceImpl implements PayService {
             String sign = Signature.getSign(order);
             order.setSign(sign);
             return order;
-        }catch (IOException e){
-            e.printStackTrace();
-            throw e;
         } catch (IllegalAccessException e) {
             e.printStackTrace();
             throw e;
@@ -275,7 +268,7 @@ public class PayServiceImpl implements PayService {
     private OrderReturnDTO prePay(OrderInfoDTO orderInfoDTO){
         String result = null;
         try {
-            result = HttpRequest.sendPost(PayConstanst.getInstance().getPrePayURL(), orderInfoDTO);
+            result = HttpRequest.sendPost(payConstanst.getPrePayURL(), orderInfoDTO);
             L.info("--------下单返回："+result);
             XStream xStream = new XStream();
             xStream.alias("xml", OrderReturnDTO.class);
@@ -304,7 +297,7 @@ public class PayServiceImpl implements PayService {
         sb.append(sdf.format(new Date()))
                 .append("E")
                 .append(star)
-                .append(RandomStringGenerator.getRandomStringByLength(22));
+                .append(QcloudRandomStringGenerator.getRandomStringByLength(22));
         return sb.toString();
     }
 
@@ -314,7 +307,7 @@ public class PayServiceImpl implements PayService {
         sb.append(sdf.format(new Date()))
                 .append("A")
                 .append(star)
-                .append(RandomStringGenerator.getRandomStringByLength(22));
+                .append(QcloudRandomStringGenerator.getRandomStringByLength(22));
         return sb.toString();
     }
     private String generateReturnableOutTradeNo(){
@@ -323,7 +316,7 @@ public class PayServiceImpl implements PayService {
         sb.append(sdf.format(new Date()))
                 .append("R")
                 .append(1)
-                .append(RandomStringGenerator.getRandomStringByLength(22));
+                .append(QcloudRandomStringGenerator.getRandomStringByLength(22));
         return sb.toString();
     }
 
@@ -333,7 +326,7 @@ public class PayServiceImpl implements PayService {
             signInfo.setAppId(Configure.getAppID());
             long time = System.currentTimeMillis()/1000;
             signInfo.setTimeStamp(String.valueOf(time));
-            signInfo.setNonceStr(RandomStringGenerator.getRandomStringByLength(32));
+            signInfo.setNonceStr(QcloudRandomStringGenerator.getRandomStringByLength(32));
             signInfo.setRepay_id("prepay_id="+repay_id);
 
             signInfo.setSignType("MD5");

@@ -29,4 +29,9 @@ public class OpenController {
         return new ResultBean(userInfoService.getRankByPhone(phone));
     }
 
+    @RequestMapping("/test")
+    public ResultBean test() {
+        return new ResultBean("123");
+    }
+
 }

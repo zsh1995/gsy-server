@@ -7,7 +7,7 @@ import java.util.Random;
  * @author zuoliangzhu
  *
  */
-public class RandomStringGenerator {
+public class QcloudRandomStringGenerator {
 	/**
      * 获取一定长度的随机字符串
      * @param length 指定字符串长度

@@ -2,6 +2,8 @@ package com.gsy.base.common;
 
 
 import com.gsy.base.web.dto.OrderInfoDTO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.util.Properties;
@@ -9,11 +11,16 @@ import java.util.Properties;
 /**
  * Created by mrzsh on 2017/11/13.
  */
+@Deprecated
+@Component
 public class PayConstanst {
 
-    public static final String payConfigFile = "/pay-config.properties";
+    @Autowired
+    private PayConfig payConfig;
 
-    private static PayConstanst payConstanst;
+    public static final String payConfigFile = "/config/pay-config.properties";
+
+    private static volatile PayConstanst payConstanst;
     private Properties properties;
 
     private String prePayURL ;
@@ -22,38 +29,15 @@ public class PayConstanst {
         return prePayURL;
     }
 
-    public static PayConstanst getInstance() throws IOException {
-        if (payConstanst==null){
-            payConstanst =  new PayConstanst();
-            payConstanst.initial();
-        }
-        return payConstanst;
-    }
-
-    public void initial() throws IOException {
-        String prefix = PayConstanst.class.getClassLoader().getResource("").getPath();
-        properties = new Properties();
-        try {
-            InputStream is = new FileInputStream(prefix+File.separator+payConfigFile);
-            properties.load(is);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            throw e;
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
     public OrderInfoDTO loadInitData(){
         OrderInfoDTO orderInfoDTO = new OrderInfoDTO();
-        orderInfoDTO.setAppid(properties.getProperty("app_id"));
-        orderInfoDTO.setMch_id(properties.getProperty("mch_id"));
-        orderInfoDTO.setNotify_url(properties.getProperty("notify_url"));
-        orderInfoDTO.setSpbill_create_ip(properties.getProperty("spbill_create_ip"));
-        orderInfoDTO.setTrade_type(properties.getProperty("trade_type"));
-        orderInfoDTO.setSign_type(properties.getProperty("sign_type"));
-        prePayURL = properties.getProperty("prePayUrl");
+        orderInfoDTO.setAppid(payConfig.getAppid());
+        orderInfoDTO.setMch_id(payConfig.getMch_id());
+        orderInfoDTO.setNotify_url(payConfig.getNotify_url());
+        orderInfoDTO.setSpbill_create_ip(payConfig.getSpbill_create_ip());
+        orderInfoDTO.setTrade_type(payConfig.getTrade_type());
+        orderInfoDTO.setSign_type(payConfig.getSign_type());
+        prePayURL = payConfig.getPrePayUrl();
         return orderInfoDTO;
     }
 
